@@ -301,6 +301,15 @@ h4 {
 /* ============================================
    6. About Section
    ============================================ */
+.name-cn {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+  letter-spacing: 0.3em;
+  margin-top: 4px;
+  margin-bottom: -4px;
+}
+
 .about-grid {
   display: grid;
   grid-template-columns: 280px 1fr;
