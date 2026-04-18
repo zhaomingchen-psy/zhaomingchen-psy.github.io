@@ -1,5 +1,9 @@
 /* ============================================
-   Dark Mode
+   DUALITY — Main Script
+   ============================================ */
+
+/* ============================================
+   1. Dark Mode
    ============================================ */
 const themeToggle = document.getElementById('theme-toggle');
 const html = document.documentElement;
@@ -16,28 +20,25 @@ function setTheme(theme) {
 }
 
 setTheme(getPreferredTheme());
-
 themeToggle.addEventListener('click', () => {
-  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  setTheme(next);
+  setTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
 });
 
 /* ============================================
-   Header Shadow on Scroll
+   2. Header Scroll
    ============================================ */
 const header = document.getElementById('header');
-
 window.addEventListener('scroll', () => {
   header.classList.toggle('scrolled', window.scrollY > 10);
 }, { passive: true });
 
 /* ============================================
-   Active Navigation (Intersection Observer)
+   3. Active Nav
    ============================================ */
-const sections = document.querySelectorAll('.section');
-const navLinks = document.querySelectorAll('.nav-link');
+const sections = document.querySelectorAll('.section, .hero');
+const navLinks = document.querySelectorAll('.nav-link[href^="#"]');
 
-const observer = new IntersectionObserver((entries) => {
+const sectionObs = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
       const id = entry.target.getAttribute('id');
@@ -46,36 +47,26 @@ const observer = new IntersectionObserver((entries) => {
       });
     }
   });
-}, {
-  rootMargin: '-20% 0px -60% 0px',
-  threshold: 0
-});
+}, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
 
-sections.forEach(section => observer.observe(section));
+sections.forEach(s => sectionObs.observe(s));
 
 /* ============================================
-   BibTeX Toggle
+   4. Scroll Reveal
    ============================================ */
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest('.pub-bibtex-toggle');
-  if (!btn) return;
-
-  const entry = btn.closest('.pub-entry');
-  const bibtex = entry.querySelector('.pub-bibtex');
-  if (!bibtex) return;
-
-  const isHidden = bibtex.hasAttribute('hidden');
-  if (isHidden) {
-    bibtex.removeAttribute('hidden');
-    btn.textContent = 'Hide BibTeX';
-  } else {
-    bibtex.setAttribute('hidden', '');
-    btn.textContent = 'BibTeX';
-  }
-});
+const reveals = document.querySelectorAll('[data-reveal]');
+const revealObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('revealed');
+      revealObs.unobserve(e.target);
+    }
+  });
+}, { rootMargin: '0px 0px -60px 0px', threshold: 0.1 });
+reveals.forEach(el => revealObs.observe(el));
 
 /* ============================================
-   Mobile Menu
+   5. Mobile Menu
    ============================================ */
 const menuToggle = document.getElementById('menu-toggle');
 const nav = document.getElementById('nav');
@@ -85,10 +76,73 @@ menuToggle.addEventListener('click', () => {
   nav.classList.toggle('open');
 });
 
-// Close menu when a nav link is clicked
 nav.addEventListener('click', (e) => {
   if (e.target.classList.contains('nav-link')) {
     menuToggle.classList.remove('open');
     nav.classList.remove('open');
   }
 });
+
+/* ============================================
+   6. Cursor Glow — follows mouse
+   ============================================ */
+const cursorGlow = document.getElementById('cursor-glow');
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+if (!prefersReducedMotion.matches && window.innerWidth > 768) {
+  document.addEventListener('mousemove', (e) => {
+    cursorGlow.style.left = e.clientX + 'px';
+    cursorGlow.style.top = e.clientY + 'px';
+    if (!cursorGlow.classList.contains('active')) {
+      cursorGlow.classList.add('active');
+    }
+  });
+
+  document.addEventListener('mouseleave', () => {
+    cursorGlow.classList.remove('active');
+  });
+}
+
+/* ============================================
+   7. 3D Tilt Cards
+   ============================================ */
+const tiltCards = document.querySelectorAll('[data-tilt]');
+
+if (!prefersReducedMotion.matches && window.innerWidth > 768) {
+  tiltCards.forEach(card => {
+    const inner = card.querySelector('.card-inner');
+
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      const rotateX = ((y - centerY) / centerY) * -8;
+      const rotateY = ((x - centerX) / centerX) * 8;
+
+      inner.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+    });
+
+    card.addEventListener('mouseleave', () => {
+      inner.style.transform = 'rotateX(0) rotateY(0) scale(1)';
+    });
+  });
+}
+
+/* ============================================
+   8. Hero Parallax Fade
+   ============================================ */
+const heroContent = document.querySelector('.hero-content');
+if (heroContent && !prefersReducedMotion.matches) {
+  window.addEventListener('scroll', () => {
+    const scrollY = window.scrollY;
+    const h = window.innerHeight;
+    if (scrollY < h) {
+      const p = scrollY / h;
+      heroContent.style.opacity = 1 - p * 1.5;
+      heroContent.style.transform = `translateY(${scrollY * 0.2}px)`;
+    }
+  }, { passive: true });
+}
